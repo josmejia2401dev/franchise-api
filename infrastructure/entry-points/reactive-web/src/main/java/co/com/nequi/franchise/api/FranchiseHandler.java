@@ -1,18 +1,20 @@
 package co.com.nequi.franchise.api;
 
 import co.com.nequi.franchise.api.dto.NameRequest;
+import co.com.nequi.franchise.api.error.ErrorMapper;
+import co.com.nequi.franchise.api.observability.ApiOperation;
+import co.com.nequi.franchise.api.observability.OperationLogger;
 import co.com.nequi.franchise.api.response.FranchiseResponses;
 import co.com.nequi.franchise.api.validation.PathVariables;
 import co.com.nequi.franchise.api.validation.RequestValidator;
 import co.com.nequi.franchise.model.franchise.port.in.FranchisePort;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class FranchiseHandler {
@@ -20,24 +22,29 @@ public class FranchiseHandler {
     private final FranchisePort franchisePort;
     private final RequestValidator requestValidator;
     private final FranchiseResponses responses;
+    private final ErrorMapper errorMapper;
 
-    /** POST /api/v1/franchises */
     public Mono<ServerResponse> create(ServerRequest request) {
         return request.bodyToMono(NameRequest.class)
                 .flatMap(requestValidator::validate)
                 .flatMap(body -> franchisePort.create(body.name()))
-                .doOnSuccess(franchise -> log.info("Franchise created id={}", franchise.getId()))
+                .doOnSuccess(franchise -> OperationLogger.success(
+                        ApiOperation.CREATE_FRANCHISE, HttpStatus.CREATED.value(), "franchiseId", franchise.getId()))
+                .doOnError(error -> OperationLogger.controlledError(
+                        ApiOperation.CREATE_FRANCHISE, errorMapper.map(error)))
                 .flatMap(responses::created);
     }
 
-    /** PATCH /api/v1/franchises/{franchiseId}/name */
     public Mono<ServerResponse> rename(ServerRequest request) {
         String franchiseId = request.pathVariable("franchiseId");
         return PathVariables.requireNonBlank(franchiseId, "franchiseId")
                 .then(request.bodyToMono(NameRequest.class))
                 .flatMap(requestValidator::validate)
                 .flatMap(body -> franchisePort.rename(franchiseId, body.name()))
-                .doOnSuccess(franchise -> log.info("Franchise renamed id={}", franchise.getId()))
+                .doOnSuccess(franchise -> OperationLogger.success(
+                        ApiOperation.RENAME_FRANCHISE, HttpStatus.OK.value(), "franchiseId", franchise.getId()))
+                .doOnError(error -> OperationLogger.controlledError(
+                        ApiOperation.RENAME_FRANCHISE, errorMapper.map(error)))
                 .flatMap(responses::ok);
     }
 }
