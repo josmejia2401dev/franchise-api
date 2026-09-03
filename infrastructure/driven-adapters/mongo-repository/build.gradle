@@ -1,0 +1,14 @@
+dependencies {
+    implementation project(':model')
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+    implementation 'org.reactivecommons.utils:object-mapper-api:0.1.0'
+    implementation 'io.github.resilience4j:resilience4j-reactor:2.4.0'
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.4.0'
+    implementation 'io.github.resilience4j:resilience4j-timelimiter:2.4.0'
+    implementation 'io.github.resilience4j:resilience4j-retry:2.4.0'
+    implementation 'org.mapstruct:mapstruct:1.6.3'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.6.3'
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
+    runtimeOnly 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.21.0' // TODO: remove this dependency to connect to real database
+    testImplementation 'org.reactivecommons.utils:object-mapper:0.1.0'
+}
