@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 
-
 @Configuration
 public class ResilienceConfig {
 
@@ -20,15 +19,26 @@ public class ResilienceConfig {
 
     @Bean
     public CircuitBreaker franchiseCircuitBreaker(
-            @Value("${resilience.mongo.circuit-breaker.failure-rate-threshold:50}") float failureRateThreshold,
+            @Value("${resilience.mongo.circuit-breaker.sliding-window-type:COUNT_BASED}") String slidingWindowType,
             @Value("${resilience.mongo.circuit-breaker.sliding-window-size:10}") int slidingWindowSize,
-            @Value("${resilience.mongo.circuit-breaker.wait-duration-seconds:5}") long waitDurationSeconds) {
+            @Value("${resilience.mongo.circuit-breaker.minimum-number-of-calls:5}") int minimumNumberOfCalls,
+            @Value("${resilience.mongo.circuit-breaker.failure-rate-threshold:50}") float failureRateThreshold,
+            @Value("${resilience.mongo.circuit-breaker.slow-call-rate-threshold:100}") float slowCallRateThreshold,
+            @Value("${resilience.mongo.circuit-breaker.slow-call-duration-threshold-seconds:2}") long slowCallDurationSeconds,
+            @Value("${resilience.mongo.circuit-breaker.wait-duration-in-open-state-seconds:5}") long waitDurationSeconds,
+            @Value("${resilience.mongo.circuit-breaker.permitted-calls-in-half-open-state:3}") int permittedCallsInHalfOpen,
+            @Value("${resilience.mongo.circuit-breaker.automatic-transition-enabled:true}") boolean automaticTransition) {
 
         CircuitBreakerConfig config = CircuitBreakerConfig.custom()
-                .failureRateThreshold(failureRateThreshold)
+                .slidingWindowType(CircuitBreakerConfig.SlidingWindowType.valueOf(slidingWindowType))
                 .slidingWindowSize(slidingWindowSize)
+                .minimumNumberOfCalls(minimumNumberOfCalls)
+                .failureRateThreshold(failureRateThreshold)
+                .slowCallRateThreshold(slowCallRateThreshold)
+                .slowCallDurationThreshold(Duration.ofSeconds(slowCallDurationSeconds))
                 .waitDurationInOpenState(Duration.ofSeconds(waitDurationSeconds))
-                .permittedNumberOfCallsInHalfOpenState(3)
+                .permittedNumberOfCallsInHalfOpenState(permittedCallsInHalfOpen)
+                .automaticTransitionFromOpenToHalfOpenEnabled(automaticTransition)
                 .build();
 
         return CircuitBreaker.of(MONGO_INSTANCE, config);

@@ -42,7 +42,7 @@ public class MongoRepositoryAdapter implements FranchiseRepository {
     private <T> java.util.function.Function<Mono<T>, Mono<T>> withResilience() {
         return mono -> mono
                 .transformDeferred(TimeLimiterOperator.of(timeLimiter))
-                .transformDeferred(CircuitBreakerOperator.of(circuitBreaker))
-                .transformDeferred(RetryOperator.of(retry));
+                .transformDeferred(RetryOperator.of(retry))
+                .transformDeferred(CircuitBreakerOperator.of(circuitBreaker));
     }
 }

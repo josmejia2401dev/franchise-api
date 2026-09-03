@@ -25,14 +25,35 @@ management:
         enabled: true
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
+# Configuracion de resiliencia (Resilience4j) aplicada al adaptador de MongoDB
 resilience:
   mongo:
     circuit-breaker:
-      failure-rate-threshold: 50
+      # Tipo de ventana para medir fallos: COUNT_BASED (por cantidad de llamadas) o TIME_BASED (por segundos).
+      # COUNT_BASED evalua las ultimas N llamadas; TIME_BASED evalua las llamadas de los ultimos N segundos.
+      sliding-window-type: COUNT_BASED
+      # Tamano de la ventana deslizante. Si es COUNT_BASED = numero de llamadas; si es TIME_BASED = segundos.
       sliding-window-size: 10
-      wait-duration-seconds: 5
+      # Minimo de llamadas registradas antes de que el circuito calcule la tasa de fallo y pueda abrir.
+      # Debe ser <= sliding-window-size para que el circuito pueda abrir con pocas llamadas.
+      minimum-number-of-calls: 5
+      # Porcentaje de fallos (0-100) que, al superarse, abre el circuito.
+      failure-rate-threshold: 50
+      # Porcentaje de llamadas "lentas" (0-100) que, al superarse, abre el circuito.
+      slow-call-rate-threshold: 100
+      # Duracion (segundos) a partir de la cual una llamada se considera "lenta".
+      slow-call-duration-threshold-seconds: 2
+      # Tiempo (segundos) que el circuito permanece ABIERTO antes de pasar a SEMI-ABIERTO.
+      wait-duration-in-open-state-seconds: 5
+      # Numero de llamadas de prueba permitidas cuando el circuito esta SEMI-ABIERTO.
+      permitted-calls-in-half-open-state: 3
+      # Si es true, el circuito pasa de ABIERTO a SEMI-ABIERTO automaticamente sin necesidad de una llamada.
+      automatic-transition-enabled: true
     time-limiter:
+      # Tiempo maximo (segundos) que se espera por una operacion antes de cancelarla con timeout.
       timeout-seconds: 3
     retry:
+      # Numero maximo de intentos (incluye el primero). 3 = 1 intento + 2 reintentos.
       max-attempts: 3
+      # Espera (milisegundos) entre reintentos.
       wait-duration-millis: 200
