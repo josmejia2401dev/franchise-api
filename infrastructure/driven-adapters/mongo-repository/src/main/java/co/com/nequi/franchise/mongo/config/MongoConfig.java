@@ -12,7 +12,13 @@ import org.springframework.context.annotation.Configuration;
 public class MongoConfig {
 
     @Bean
-    public MongoDBSecret dbSecret(@Value("${spring.data.mongodb.uri:mongodb://localhost:27017/franchise}") String uri) {
+    public MongoDBSecret dbSecret(
+            @Value("${mongodb.uri-template}") String uriTemplate,
+            @Value("${mongodb.username:}") String username,
+            @Value("${mongodb.password:}") String password) {
+        String uri = uriTemplate
+                .replace("{username}", username)
+                .replace("{password}", password);
         return MongoDBSecret.builder()
                 .uri(uri)
                 .build();

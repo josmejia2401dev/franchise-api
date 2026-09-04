@@ -13,7 +13,8 @@ spring:
     include: null
   data:
     mongodb:
-      uri: ${MONGODB_URI}
+      # Se define via MongoConnectionDetails a partir de mongodb.* (abajo).
+      auto-index-creation: false
 management:
   endpoints:
     web:
@@ -25,6 +26,13 @@ management:
         enabled: true
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS}
+# Conexion a Mongo: la URI final se ensambla (String.replace) a partir de la
+# plantilla y las credenciales. En local vienen del .env; en AWS, ECS inyecta
+# username/password desde Secrets Manager y la plantilla como variable de entorno.
+mongodb:
+  uri-template: ${MONGODB_URI_TEMPLATE}
+  username: ${MONGODB_USERNAME:}
+  password: ${MONGODB_PASSWORD:}
 # Configuracion de resiliencia (Resilience4j) aplicada al adaptador de MongoDB
 resilience:
   mongo:
