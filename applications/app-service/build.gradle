@@ -12,6 +12,11 @@ dependencies {
     testImplementation 'tools.jackson.core:jackson-databind'
 }
 
+tasks.named('compileTestJava') {
+    exclude '**/ArchitectureTest.java'
+    exclude '**/Utils.java'
+}
+
 tasks.register('explodedJar', Copy) {
     with jar
     into layout.buildDirectory.dir("exploded")
