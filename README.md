@@ -1,47 +1,132 @@
-# Proyecto Base Implementando Clean Architecture
+# Franchise Management API
 
-## Antes de Iniciar
+Reactive REST API to manage a network of commercial franchises, their branches
+and products. Built with Spring WebFlux (fully non-blocking), Clean Architecture
+(Bancolombia scaffold) and reactive MongoDB.
 
-Empezaremos por explicar los diferentes componentes del proyectos y partiremos de los componentes externos, continuando con los componentes core de negocio (dominio) y por último el inicio y configuración de la aplicación.
+## Domain model
 
-Lee el artículo [Clean Architecture — Aislando los detalles](https://medium.com/bancolombia-tech/clean-architecture-aislando-los-detalles-4f9530f35d7a)
+```
+Franchise (1) ---< (N) Branch (1) ---< (N) Product
+```
 
-# Arquitectura
+- **Franchise**: has a name and a list of branches.
+- **Branch**: has a name, belongs to a franchise, and contains a list of products.
+- **Product**: has a name and a stock, and belongs to a branch.
 
-![Clean Architecture](https://miro.medium.com/max/1400/1*ZdlHz8B0-qu9Y-QO3AXR_w.png)
+`Franchise` is the aggregate root; branches and products live inside it.
 
-## Domain
+## Tech stack
 
-Es el módulo más interno de la arquitectura, pertenece a la capa del dominio y encapsula la lógica y reglas del negocio mediante modelos y entidades del dominio.
+- Java 21, Spring Boot 4, Spring WebFlux (RouterFunctions + Handlers)
+- Reactive MongoDB (MongoDB Atlas)
+- Resilience4j (Circuit Breaker + TimeLimiter + Retry)
+- springdoc-openapi (Swagger UI)
+- Gradle multi-module (Clean Architecture: domain / usecase / infrastructure / app)
 
-## Usecases
+## Requirements
 
-Este módulo gradle perteneciente a la capa del dominio, implementa los casos de uso del sistema, define lógica de aplicación y reacciona a las invocaciones desde el módulo de entry points, orquestando los flujos hacia el módulo de entities.
+- Java 21 (the Gradle toolchain resolves it automatically)
+- A MongoDB Atlas cluster and its connection string
+- The Gradle wrapper is included; no local Gradle install needed
 
-## Infrastructure
+## Configuration
 
-### Helpers
+Configuration is read from environment variables. For local runs, place a `.env`
+file at the repository root (the values are loaded as environment variables).
 
-En el apartado de helpers tendremos utilidades generales para los Driven Adapters y Entry Points.
+| Variable | Description | Example |
+|---|---|---|
+| `SERVER_PORT` | HTTP port | `8080` |
+| `CORS_ALLOWED_ORIGINS` | Allowed CORS origins (comma-separated) | `http://localhost:4200` |
+| `MONGODB_URI_TEMPLATE` | Mongo URI, with `{username}`/`{password}` placeholders | `mongodb+srv://{username}:{password}@cluster0.xxxx.mongodb.net/franchise?retryWrites=true&w=majority&appName=Cluster0` |
+| `MONGODB_USERNAME` | Mongo user | `my-user` |
+| `MONGODB_PASSWORD` | Mongo password (URL-encode special chars) | `my-pass` |
 
-Estas utilidades no están arraigadas a objetos concretos, se realiza el uso de generics para modelar comportamientos
-genéricos de los diferentes objetos de persistencia que puedan existir, este tipo de implementaciones se realizan
-basadas en el patrón de diseño [Unit of Work y Repository](https://medium.com/@krzychukosobudzki/repository-design-pattern-bc490b256006)
+At start-up the app assembles the final Mongo URI by replacing the placeholders
+in the template with the username/password, so no full connection string or
+credentials are hardcoded.
 
-Estas clases no puede existir solas y debe heredarse su compartimiento en los **Driven Adapters**
+Example `.env`:
 
-### Driven Adapters
+```
+SERVER_PORT=8080
+CORS_ALLOWED_ORIGINS=http://localhost:4200,http://localhost:8080
+MONGODB_URI_TEMPLATE=mongodb+srv://{username}:{password}@cluster0.xxxx.mongodb.net/franchise?retryWrites=true&w=majority&appName=Cluster0
+MONGODB_USERNAME=my-user
+MONGODB_PASSWORD=my-pass
+```
 
-Los driven adapter representan implementaciones externas a nuestro sistema, como lo son conexiones a servicios rest,
-soap, bases de datos, lectura de archivos planos, y en concreto cualquier origen y fuente de datos con la que debamos
-interactuar.
+## Run locally
 
-### Entry Points
+```bash
+./gradlew :app-service:bootRun
+```
 
-Los entry points representan los puntos de entrada de la aplicación o el inicio de los flujos de negocio.
+The API starts on `http://localhost:8080`.
 
-## Application
+## API documentation (Swagger)
 
-Este módulo es el más externo de la arquitectura, es el encargado de ensamblar los distintos módulos, resolver las dependencias y crear los beans de los casos de use (UseCases) de forma automática, inyectando en éstos instancias concretas de las dependencias declaradas. Además inicia la aplicación (es el único módulo del proyecto donde encontraremos la función “public static void main(String[] args)”.
+Once running:
 
-**Los beans de los casos de uso se disponibilizan automaticamente gracias a un '@ComponentScan' ubicado en esta capa.**
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+## Endpoints
+
+Base path: `/api/v1/franchises`
+
+| # | Action | Method | Path |
+|---|--------|--------|------|
+| 1 | Create franchise | POST | `/api/v1/franchises` |
+| 2 | Add branch | POST | `/api/v1/franchises/{franchiseId}/branches` |
+| 3 | Add product | POST | `/api/v1/franchises/{franchiseId}/branches/{branchId}/products` |
+| 4 | Remove product | DELETE | `/api/v1/franchises/{franchiseId}/branches/{branchId}/products/{productId}` |
+| 5 | Update product stock | PATCH | `/api/v1/franchises/{franchiseId}/branches/{branchId}/products/{productId}/stock` |
+| 6 | Top-stock product per branch | GET | `/api/v1/franchises/{franchiseId}/products/top-stock` |
+| 7 | Update franchise name | PATCH | `/api/v1/franchises/{franchiseId}/name` |
+| 8 | Update branch name | PATCH | `/api/v1/franchises/{franchiseId}/branches/{branchId}/name` |
+| 9 | Update product name | PATCH | `/api/v1/franchises/{franchiseId}/branches/{branchId}/products/{productId}/name` |
+
+Example — create a franchise:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/franchises \
+  -H "Content-Type: application/json" \
+  -d '{"name":"My Franchise"}'
+```
+
+A ready-to-run Postman collection is available under `docs/postman/`.
+
+## Tests and coverage
+
+```bash
+./gradlew test
+```
+
+Reactive flows are tested with `StepVerifier`. Coverage reports (JaCoCo) are
+generated under each module's `build/reports/`.
+
+## Health
+
+- Liveness: `GET /actuator/health/liveness`
+- Health: `GET /actuator/health`
+
+## Deployment (AWS)
+
+Infrastructure as Code lives in a separate repository (`franchise-api-infra`).
+It deploys the app to AWS with ECS Fargate + ECR + ALB + Secrets Manager using
+Terraform. See that repository's `DEPLOY.md` for the step-by-step guide.
+
+## Architecture
+
+Clean Architecture (Bancolombia scaffold), organized as Gradle modules:
+
+- `domain/model` — entities, ports (in/out), domain exceptions
+- `domain/usecase` — business use cases (reactive)
+- `infrastructure/driven-adapters/mongo-repository` — reactive MongoDB adapter
+- `infrastructure/entry-points/reactive-web` — WebFlux router, handlers, DTOs
+- `applications/app-service` — Spring Boot bootstrap and wiring
+
+Business rules live only in the domain; ports are interfaces in the domain and
+adapters implement them in infrastructure.
