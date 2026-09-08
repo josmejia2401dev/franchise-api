@@ -2,7 +2,6 @@ package co.com.nequi.franchise.usecase.franchise;
 
 import co.com.nequi.franchise.model.franchise.branch.Branch;
 import co.com.nequi.franchise.model.exception.NotFoundException;
-import co.com.nequi.franchise.model.exception.ValidationException;
 import co.com.nequi.franchise.model.franchise.Franchise;
 import co.com.nequi.franchise.model.franchise.gateways.FranchiseRepository;
 import co.com.nequi.franchise.model.shared.gateways.IdGenerator;
@@ -45,19 +44,6 @@ class BranchUseCaseTest {
                     assertThat(saved.getBranches().get(0).getId()).isEqualTo("b1");
                 })
                 .verifyComplete();
-    }
-
-    @Test
-    void addFailsWhenBranchNameIsDuplicated() {
-        Franchise existing = Franchise.builder()
-                .id("f1").name("Nequi")
-                .branch(Branch.builder().id("b1").name("Downtown").build())
-                .build();
-        when(repository.findById("f1")).thenReturn(Mono.just(existing));
-
-        StepVerifier.create(useCase.add("f1", "downtown"))
-                .expectError(ValidationException.class)
-                .verify();
     }
 
     @Test

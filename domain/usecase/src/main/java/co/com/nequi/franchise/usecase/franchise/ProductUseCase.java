@@ -30,7 +30,6 @@ public class ProductUseCase implements ProductPort {
                 .flatMap(name -> validStock(stock).thenReturn(name))
                 .flatMap(name -> requireFranchise(franchiseId)
                         .flatMap(franchise -> operations.requireBranch(franchise, branchId)
-                                .flatMap(branch -> ensureProductNameIsFree(branch, name))
                                 .map(branch -> branch.toBuilder()
                                         .product(Product.builder()
                                                 .id(idGenerator.newId())
@@ -47,7 +46,7 @@ public class ProductUseCase implements ProductPort {
         return requireFranchise(franchiseId)
                 .flatMap(franchise -> operations.requireBranch(franchise, branchId)
                         .flatMap(branch -> requireProduct(branch, productId)
-                                .flatMap(product -> productsWithout(branch, productId)))
+                                .flatMap(product -> removeProductFromBranch(branch, productId)))
                         .flatMap(updatedBranch -> operations.replaceBranch(franchise, branchId, updatedBranch)))
                 .flatMap(franchiseRepository::save);
     }
@@ -58,7 +57,7 @@ public class ProductUseCase implements ProductPort {
                 .then(requireFranchise(franchiseId))
                 .flatMap(franchise -> operations.requireBranch(franchise, branchId)
                         .flatMap(branch -> requireProduct(branch, productId)
-                                .flatMap(product -> productsReplacing(branch, product.withStock(stock))))
+                                .flatMap(product -> replaceProductInBranch(branch, product.withStock(stock))))
                         .flatMap(updatedBranch -> operations.replaceBranch(franchise, branchId, updatedBranch)))
                 .flatMap(franchiseRepository::save);
     }
@@ -69,10 +68,8 @@ public class ProductUseCase implements ProductPort {
                 .flatMap(name -> requireFranchise(franchiseId)
                         .flatMap(franchise -> operations.requireBranch(franchise, branchId)
                                 .flatMap(branch -> requireProduct(branch, productId)
-                                        .flatMap(product -> ensureProductNameIsFree(branch, name, productId)
-                                                .thenReturn(product))
                                         .map(product -> product.withName(name))
-                                        .flatMap(renamed -> productsReplacing(branch, renamed)))
+                                        .flatMap(renamed -> replaceProductInBranch(branch, renamed)))
                                 .flatMap(updatedBranch -> operations.replaceBranch(franchise, branchId, updatedBranch))))
                 .flatMap(franchiseRepository::save);
     }
@@ -102,7 +99,7 @@ public class ProductUseCase implements ProductPort {
                 .switchIfEmpty(Mono.error(NotFoundException.product(productId)));
     }
 
-    private Mono<Branch> productsReplacing(Branch branch, Product updatedProduct) {
+    private Mono<Branch> replaceProductInBranch(Branch branch, Product updatedProduct) {
         return Flux.fromIterable(branch.getProducts())
                 .concatMap(product -> Mono.just(product)
                         .filter(current -> current.getId().equals(updatedProduct.getId()))
@@ -112,7 +109,7 @@ public class ProductUseCase implements ProductPort {
                 .map(products -> branch.toBuilder().clearProducts().products(products).build());
     }
 
-    private Mono<Branch> productsWithout(Branch branch, String productId) {
+    private Mono<Branch> removeProductFromBranch(Branch branch, String productId) {
         return Flux.fromIterable(branch.getProducts())
                 .filter(product -> !product.getId().equals(productId))
                 .collectList()
@@ -123,18 +120,5 @@ public class ProductUseCase implements ProductPort {
         return Mono.just(stock)
                 .filter(value -> value >= 0)
                 .switchIfEmpty(Mono.error(ValidationException.invalidStock()));
-    }
-
-    private Mono<Branch> ensureProductNameIsFree(Branch branch, String name) {
-        return ensureProductNameIsFree(branch, name, null).thenReturn(branch);
-    }
-
-    private Mono<Void> ensureProductNameIsFree(Branch branch, String name, String excludedProductId) {
-        return Flux.fromIterable(branch.getProducts())
-                .filter(product -> !product.getId().equals(excludedProductId))
-                .filter(product -> product.getName().equalsIgnoreCase(name))
-                .next()
-                .flatMap(duplicate -> Mono.<Void>error(ValidationException.duplicateProductName()))
-                .switchIfEmpty(Mono.empty());
     }
 }

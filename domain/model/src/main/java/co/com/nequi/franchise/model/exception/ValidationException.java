@@ -15,14 +15,4 @@ public class ValidationException extends BusinessException {
         return new ValidationException(BusinessErrorCode.INVALID_STOCK,
                 BusinessErrorCode.INVALID_STOCK.getDefaultMessage());
     }
-
-    public static ValidationException duplicateBranchName() {
-        return new ValidationException(BusinessErrorCode.DUPLICATE_BRANCH_NAME,
-                BusinessErrorCode.DUPLICATE_BRANCH_NAME.getDefaultMessage());
-    }
-
-    public static ValidationException duplicateProductName() {
-        return new ValidationException(BusinessErrorCode.DUPLICATE_PRODUCT_NAME,
-                BusinessErrorCode.DUPLICATE_PRODUCT_NAME.getDefaultMessage());
-    }
 }
