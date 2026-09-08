@@ -8,10 +8,11 @@ import co.com.nequi.franchise.api.validation.RequestValidator;
 import co.com.nequi.franchise.model.exception.NotFoundException;
 import co.com.nequi.franchise.model.franchise.Franchise;
 import co.com.nequi.franchise.model.franchise.branch.Branch;
+import co.com.nequi.franchise.model.franchise.product.BranchTopProduct;
 import co.com.nequi.franchise.model.franchise.product.Product;
-import co.com.nequi.franchise.model.franchise.port.in.BranchPort;
-import co.com.nequi.franchise.model.franchise.port.in.FranchisePort;
-import co.com.nequi.franchise.model.franchise.port.in.ProductPort;
+import co.com.nequi.franchise.model.franchise.gateways.BranchPort;
+import co.com.nequi.franchise.model.franchise.gateways.FranchisePort;
+import co.com.nequi.franchise.model.franchise.gateways.ProductPort;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
@@ -233,7 +234,7 @@ class FranchiseRouterTest {
                 .build();
         when(productPort.topStockPerBranch(eq("f1")))
                 .thenReturn(reactor.core.publisher.Flux.just(
-                        co.com.nequi.franchise.model.franchise.BranchTopProduct.of(branch, branch.getProducts().get(0))));
+                        BranchTopProduct.of(branch, branch.getProducts().get(0))));
 
         webTestClient.get().uri("/api/v1/franchises/f1/products/top-stock")
                 .exchange()

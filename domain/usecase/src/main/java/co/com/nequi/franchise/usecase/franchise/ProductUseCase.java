@@ -2,11 +2,11 @@ package co.com.nequi.franchise.usecase.franchise;
 
 import co.com.nequi.franchise.model.exception.NotFoundException;
 import co.com.nequi.franchise.model.exception.ValidationException;
-import co.com.nequi.franchise.model.franchise.BranchTopProduct;
+import co.com.nequi.franchise.model.franchise.product.BranchTopProduct;
 import co.com.nequi.franchise.model.franchise.Franchise;
 import co.com.nequi.franchise.model.franchise.branch.Branch;
 import co.com.nequi.franchise.model.franchise.gateways.FranchiseRepository;
-import co.com.nequi.franchise.model.franchise.port.in.ProductPort;
+import co.com.nequi.franchise.model.franchise.gateways.ProductPort;
 import co.com.nequi.franchise.model.franchise.product.Product;
 import co.com.nequi.franchise.model.shared.gateways.IdGenerator;
 import co.com.nequi.franchise.usecase.franchise.support.FranchiseAggregateOperations;

@@ -10,7 +10,7 @@ import co.com.nequi.franchise.api.observability.OperationLogger;
 import co.com.nequi.franchise.api.response.FranchiseResponses;
 import co.com.nequi.franchise.api.validation.PathVariables;
 import co.com.nequi.franchise.api.validation.RequestValidator;
-import co.com.nequi.franchise.model.franchise.port.in.ProductPort;
+import co.com.nequi.franchise.model.franchise.gateways.ProductPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;

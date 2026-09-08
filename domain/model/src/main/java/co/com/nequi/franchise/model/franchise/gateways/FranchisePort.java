@@ -1,4 +1,4 @@
-package co.com.nequi.franchise.model.franchise.port.in;
+package co.com.nequi.franchise.model.franchise.gateways;
 
 import co.com.nequi.franchise.model.franchise.Franchise;
 import reactor.core.publisher.Mono;

@@ -4,7 +4,7 @@ import co.com.nequi.franchise.model.franchise.branch.Branch;
 import co.com.nequi.franchise.model.exception.NotFoundException;
 import co.com.nequi.franchise.model.franchise.Franchise;
 import co.com.nequi.franchise.model.franchise.gateways.FranchiseRepository;
-import co.com.nequi.franchise.model.franchise.port.in.BranchPort;
+import co.com.nequi.franchise.model.franchise.gateways.BranchPort;
 import co.com.nequi.franchise.model.shared.gateways.IdGenerator;
 import co.com.nequi.franchise.usecase.franchise.support.FranchiseAggregateOperations;
 import lombok.RequiredArgsConstructor;

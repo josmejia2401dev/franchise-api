@@ -1,7 +1,6 @@
-package co.com.nequi.franchise.model.franchise;
+package co.com.nequi.franchise.model.franchise.product;
 
 import co.com.nequi.franchise.model.franchise.branch.Branch;
-import co.com.nequi.franchise.model.franchise.product.Product;
 import lombok.Builder;
 import lombok.Value;
 
